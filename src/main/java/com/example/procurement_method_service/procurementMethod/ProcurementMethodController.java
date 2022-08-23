@@ -20,6 +20,7 @@ public class ProcurementMethodController {
 
     @PostMapping
     public Mono<ProcurementMethod> save(@RequestBody ProcurementMethod procurementMethod) {
+        System.out.println("method.getName() = " + procurementMethod.getName());
 
         return service.save(procurementMethod);
     }
@@ -28,6 +29,7 @@ public class ProcurementMethodController {
     @PutMapping
     public Mono<ProcurementMethod> update(@RequestBody ProcurementMethod method) {
 
+        System.out.println("method.getName() = " + method.getName());
         return service.update(method);
 
     }
