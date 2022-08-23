@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Objects;
 import java.util.function.Supplier;
 
 @Service
@@ -30,14 +31,26 @@ public class ProcurementMethodService {
 
     public Mono<ProcurementMethod> update(ProcurementMethod method) {
 
+//        return repository.findById(method.getId())
+//                .flatMap(procurementMethod -> repository.findProcurementMethodByIdAndName(method.getName(), method.getId())
+//                        .flatMap(p -> repository.save(method))
+//                        .switchIfEmpty(
+//                                repository.findProcurementMethodByIdAndNameNot(method.getName(), method.getId())
+//                                        .flatMap(Mono::just)
+//                                        .switchIfEmpty(repository.save(method))
+//                        ))
+//                .switchIfEmpty(Mono.just(method));
+
         return repository.findById(method.getId())
-                .flatMap(procurementMethod -> repository.findProcurementMethodByIdAndName(method.getName(), method.getId())
-                        .flatMap(p -> repository.save(method))
-                        .switchIfEmpty(
-                                repository.findProcurementMethodByIdAndNameNot(method.getName(), method.getId())
-                                        .flatMap(Mono::just)
-                                        .switchIfEmpty(repository.save(method))
-                        ))
+                .flatMap(procurementMethod -> {
+                    if (Objects.equals(procurementMethod.getName(), method.getName())) {
+                        return repository.save(method);
+                    } else {
+                        return repository.findProcurementMethodByIdAndNameNot(method.getName(), method.getId())
+                                .flatMap(Mono::just)
+                                .switchIfEmpty(repository.save(method));
+                    }
+                })
                 .switchIfEmpty(Mono.just(method));
 
 
