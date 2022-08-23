@@ -5,6 +5,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.function.Supplier;
+
 @Service
 public class ProcurementMethodService {
 
@@ -20,18 +22,24 @@ public class ProcurementMethodService {
 
     public Mono<ProcurementMethod> save(ProcurementMethod procurementMethod) {
 
-        Mono<ProcurementMethod> save = repository.save(procurementMethod);
-        return save;
+        return repository.findProcurementMethodByName(procurementMethod.getName())
+                .flatMap(Mono::just)
+                .switchIfEmpty(repository.save(procurementMethod));
     }
 
 
     public Mono<ProcurementMethod> update(ProcurementMethod method) {
 
-        Mono<ProcurementMethod> mono = repository.findById(method.getId());
+        return repository.findById(method.getId())
+                .flatMap(procurementMethod -> repository.findProcurementMethodByIdAndName(method.getName(), method.getId())
+                        .flatMap(p -> repository.save(method))
+                        .switchIfEmpty(
+                                repository.findProcurementMethodByIdAndNameNot(method.getName(), method.getId())
+                                        .flatMap(Mono::just)
+                                        .switchIfEmpty(repository.save(method))
+                        ))
+                .switchIfEmpty(Mono.just(method));
 
-        Mono<ProcurementMethod> save = repository.save(method);
-
-        return save;
 
     }
 
