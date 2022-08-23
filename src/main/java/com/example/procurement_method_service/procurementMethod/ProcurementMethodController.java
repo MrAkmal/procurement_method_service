@@ -51,10 +51,17 @@ public class ProcurementMethodController {
 
     }
 
-    @GetMapping
+    @GetMapping("/list")
     public Flux<ProcurementMethod> getAll() {
 
         return service.getAll();
+    }
+
+
+    @GetMapping
+    public Flux<ProcurementMethod> getAllSort(@RequestParam(required = false, defaultValue = "id") String fieldName) {
+
+        return service.getAllSort(fieldName);
     }
 
 }

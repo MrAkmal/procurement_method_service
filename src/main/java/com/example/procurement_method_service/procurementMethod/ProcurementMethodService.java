@@ -1,6 +1,7 @@
 package com.example.procurement_method_service.procurementMethod;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -72,6 +73,17 @@ public class ProcurementMethodService {
     public Flux<ProcurementMethod> getAll() {
 
         Flux<ProcurementMethod> list = repository.findAll();
+
+        System.out.println("list = " + list);
+
+        return list;
+
+    }
+
+
+    public Flux<ProcurementMethod> getAllSort(String fieldName) {
+
+        Flux<ProcurementMethod> list = repository.findAll(Sort.by(Sort.Direction.ASC, fieldName));
 
         System.out.println("list = " + list);
 
