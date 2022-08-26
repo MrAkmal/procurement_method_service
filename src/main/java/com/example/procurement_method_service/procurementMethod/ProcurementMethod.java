@@ -29,6 +29,8 @@ public class ProcurementMethod {
     @Column("procurement_nature_id")
     private int procurementNatureId;
 
-
-
+    public ProcurementMethod(String name, int procurementNatureId) {
+        this.name = name;
+        this.procurementNatureId = procurementNatureId;
+    }
 }

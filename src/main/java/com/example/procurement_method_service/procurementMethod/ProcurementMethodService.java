@@ -1,8 +1,12 @@
 package com.example.procurement_method_service.procurementMethod;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -13,46 +17,46 @@ public class ProcurementMethodService {
 
 
     private final ProcurementMethodRepository repository;
+    private final WebClient webClient;
+
+    @Value("${procurement_nature_base_url}")
+    String procurementNatureBaseUrl;
 
 
     @Autowired
-    public ProcurementMethodService(ProcurementMethodRepository repository) {
+    public ProcurementMethodService(ProcurementMethodRepository repository, WebClient webClient) {
         this.repository = repository;
+        this.webClient = webClient;
     }
 
 
-    public Mono<ProcurementMethod> save(ProcurementMethod procurementMethod) {
+    public Mono<ProcurementMethod> save(ProcurementMethodDTO procurementMethod) {
 
-        return repository.findProcurementMethodByName(procurementMethod.getName())
-                .flatMap(Mono::just)
-                .switchIfEmpty(repository.save(procurementMethod));
+        int procurementNatureId = procurementMethod.getProcurementNatureId();
+
+
+        return getProcurementNature(procurementNatureId).flatMap(procurementNatureDTO ->
+                        repository.save(new ProcurementMethod(procurementMethod.getName(), procurementNatureDTO.getId())))
+                .switchIfEmpty(Mono.empty());
+
     }
 
 
-    public Mono<ProcurementMethod> update(ProcurementMethod method) {
+    public Mono<ProcurementMethod> update(ProcurementMethodDTO method) {
 
-//        return repository.findById(method.getId())
-//                .flatMap(procurementMethod -> repository.findProcurementMethodByIdAndName(method.getName(), method.getId())
-//                        .flatMap(p -> repository.save(method))
-//                        .switchIfEmpty(
-//                                repository.findProcurementMethodByIdAndNameNot(method.getName(), method.getId())
-//                                        .flatMap(Mono::just)
-//                                        .switchIfEmpty(repository.save(method))
-//                        ))
-//                .switchIfEmpty(Mono.just(method));
+        int procurementNatureId = method.getProcurementNatureId();
+
+        Mono<ProcurementNatureDTO> procurementNature = getProcurementNature(procurementNatureId);
 
         return repository.findById(method.getId())
-                .flatMap(procurementMethod -> {
-                    if (Objects.equals(procurementMethod.getName(), method.getName())) {
-                        return repository.save(method);
-                    } else {
-                        return repository.findProcurementMethodByIdAndNameNot(method.getName(), method.getId())
-                                .flatMap(Mono::just)
-                                .switchIfEmpty(repository.save(method));
-                    }
-                })
-                .switchIfEmpty(Mono.just(method));
-
+                .flatMap(procurementMethod -> procurementNature.flatMap(
+                        procurementNatureDTO -> {
+                            procurementMethod.setName(procurementMethod.getName());
+                            procurementMethod.setProcurementNatureId(procurementNatureDTO.getId());
+                            return repository.save(procurementMethod);
+                        }
+                ).switchIfEmpty(Mono.empty()))
+                .switchIfEmpty(Mono.empty());
 
     }
 
@@ -66,7 +70,8 @@ public class ProcurementMethodService {
 
     public Mono<ProcurementMethod> get(Integer id) {
 
-        return repository.findById(id);
+        return repository.findById(id)
+                .switchIfEmpty(Mono.empty());
 
     }
 
@@ -92,4 +97,15 @@ public class ProcurementMethodService {
     }
 
 
+    public Mono<ProcurementNatureDTO> getProcurementNature(int id) {
+        return webClient.get().uri(procurementNatureBaseUrl + "/" + id)
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .retrieve().bodyToMono(ProcurementNatureDTO.class);
+    }
+
+    public Mono<Void> deleteProcurementMethodByProcurementNatureId(Integer procurementNatureId) {
+
+        return repository.updateByProcurementNatureId(procurementNatureId);
+//        return repository.deleteByProcurementNatureId(procurementNatureId);
+    }
 }
