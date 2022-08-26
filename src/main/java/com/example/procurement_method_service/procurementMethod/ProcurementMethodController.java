@@ -64,7 +64,7 @@ public class ProcurementMethodController {
 
 
     @GetMapping
-    public Flux<ProcurementMethod> getAllSort(@RequestParam(required = false, defaultValue = "id") String fieldName) {
+    public Flux<ProcurementMethodResponse> getAllSort(@RequestParam(required = false, defaultValue = "id") String fieldName) {
 
         return service.getAllSort(fieldName);
     }

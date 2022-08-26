@@ -86,13 +86,28 @@ public class ProcurementMethodService {
     }
 
 
-    public Flux<ProcurementMethod> getAllSort(String fieldName) {
+    public Flux<ProcurementMethodResponse> getAllSort(String fieldName) {
 
         Flux<ProcurementMethod> list = repository.findAll(Sort.by(Sort.Direction.ASC, fieldName));
 
-        System.out.println("list = " + list);
+        Flux<ProcurementMethodResponse> responseFlux =
+                list.flatMap(procurementMethod -> getProcurementNature(procurementMethod.getProcurementNatureId())
+                        .flatMap(procurementNatureDTO -> {
+                            String procurementNatureName = procurementMethod.getName();
+                            return Mono.just(new ProcurementMethodResponse(
+                                    procurementMethod.getId(),
+                                    procurementMethod.getName(),
+                                    procurementNatureName
+                            ));
+                        }).switchIfEmpty(Mono.just(new ProcurementMethodResponse(
+                                procurementMethod.getId(),
+                                procurementMethod.getName(),
+                                "NOT FOUND"
+                        )))).switchIfEmpty(Mono.empty());
 
-        return list;
+        System.out.println("list = " + responseFlux);
+
+        return responseFlux;
 
     }
 
@@ -108,4 +123,5 @@ public class ProcurementMethodService {
         return repository.updateByProcurementNatureId(procurementNatureId);
 //        return repository.deleteByProcurementNatureId(procurementNatureId);
     }
+
 }
