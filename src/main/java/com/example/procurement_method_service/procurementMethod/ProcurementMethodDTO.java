@@ -19,7 +19,7 @@ public class ProcurementMethodDTO {
     @Length(min = 2, max = 60)
     private String name;
 
-    @NotNull(message = " paymentNature is required")
+    @NotNull(message = " procurementNature is required")
     private int procurementNatureId;
 
 }
