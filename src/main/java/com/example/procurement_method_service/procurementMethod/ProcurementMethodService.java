@@ -91,9 +91,10 @@ public class ProcurementMethodService {
         Flux<ProcurementMethod> list = repository.findAll(Sort.by(Sort.Direction.ASC, fieldName));
 
         Flux<ProcurementMethodResponse> responseFlux =
-                list.flatMap(procurementMethod -> getProcurementNature(procurementMethod.getProcurementNatureId())
+                list.flatMap(procurementMethod ->
+                        getProcurementNature(procurementMethod.getProcurementNatureId())
                         .flatMap(procurementNatureDTO -> {
-                            String procurementNatureName = procurementMethod.getName();
+                            String procurementNatureName = procurementNatureDTO.getName();
                             return Mono.just(new ProcurementMethodResponse(
                                     procurementMethod.getId(),
                                     procurementMethod.getName(),
@@ -113,9 +114,11 @@ public class ProcurementMethodService {
 
 
     public Mono<ProcurementNatureDTO> getProcurementNature(int id) {
-        return webClient.get().uri(procurementNatureBaseUrl + "/" + id)
+        return webClient.get()
+                .uri(procurementNatureBaseUrl + "/" + id)
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                .retrieve().bodyToMono(ProcurementNatureDTO.class);
+                .retrieve()
+                .bodyToMono(ProcurementNatureDTO.class);
     }
 
     public Mono<Void> deleteProcurementMethodByProcurementNatureId(Integer procurementNatureId) {
